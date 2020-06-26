@@ -22,36 +22,36 @@ float FireNormalDegree = 0;       //Normally where spark should fire at TDC.
 
 
 //FireOffsets
-float FireAimDeviation = 2.00;        //+-Degrees of play for the system to find the fire solution when the crank is rotating.
+float FireAimDeviation = 3.00;        //+-Degrees of play for the system to find the fire solution when the crank is rotating.
 float FireOffset = 0;               //If spark still is offset from desired point, you can add offset here for adjustment.
 
 
 //SPARKTABLE
 bool SparkTableEnable = true;     //Enable or disable sparktable
-int SparkTablePrecision = 100;     //Change this value to use 50s 100s 500s or 1000s in the sparktable.
+int SparkTablePrecision = 500;     //Change this value to use 50s 100s 500s or 1000s in the sparktable.
 const int SparkTableAmountOfValues = 20; //CHANGE THIS FOR CORRESPONDING OF TOTAL VALUES IN THE TABLE
 
 int SparkTable[SparkTableAmountOfValues][2] = {  
    {0, 0} ,
-   {100, 5} ,
-   {200, 10} ,
-   {300, 15} ,
-   {400, 25} ,
-   {500, 30} ,
-   {600, 35} ,
-   {700, 40} ,
-   {800, 45} ,
-   {900, 50} ,
-   {1000, 55} ,
-   {1100, 60} ,
-   {1200, 65} ,
-   {1300, 70} ,
-   {1400, 75} ,
-   {1500, 80} ,
-   {1600, 85} ,
-   {1700, 90} ,
-   {1800, 95} ,
-   {1900, 100}
+   {500, 5} ,
+   {1000, 10} ,
+   {1500, 15} ,
+   {2000, 25} ,
+   {2500, 30} ,
+   {3000, 35} ,
+   {3500, 40} ,
+   {4000, 45} ,
+   {4500, 50} ,
+   {5000, 55} ,
+   {5500, 60} ,
+   {6000, 65} ,
+   {6500, 70} ,
+   {7000, 75} ,
+   {7500, 80} ,
+   {8000, 85} ,
+   {8500, 90} ,
+   {9000, 95} ,
+   {9500, 100}
 };
 
 
@@ -119,6 +119,7 @@ int missingtoothdebug = 0;
 int toothcirclecount = toothtotalcount+1;
 unsigned long toothcount;
 unsigned long buskeeperLength = 0;
+unsigned long CrankRevolutionNominalCount = 0;
 
 //ToothNominalClockValue
 unsigned long ToothNominalClock = 0;
@@ -132,7 +133,13 @@ unsigned long CrankRevClock = 0;
 unsigned long CrankRevClockPrev = 0;
 unsigned long CrankRevClockGlobal;
 
-
+//CrankSmoothClock
+const int CrankRevMult = 5;
+int CrankRevolutionRPMSmoothing = CrankRevMult;
+int CrankSmoothRevMaxCount = CrankRevolutionRPMSmoothing+1;
+float CrankNominalRevSpeedsArrayMultiplier[CrankRevMult];
+float CrankNominalSmooth = 0;
+float CrankNominalMicroSeconds = 0;
 
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -182,11 +189,17 @@ void toothcounter(int toothinput){
     //Steady pulse for the Crank Clock
     CrankRevolutionClockReset = true;
     SparkTableLookupReset = true;
+    CrankRevolutionNominalCount++;
     }
 
   if (toothcount == 3){
     buskeeperLength = BlippTimeGap;
   }
+  
+  if (CrankRevolutionNominalCount >= CrankSmoothRevMaxCount){
+    CrankRevolutionNominalCount = 1;
+  }
+  
   ToothNominalClockValue(buskeeperLength);
 
 }
@@ -218,7 +231,28 @@ void ToothSmoothClock(unsigned long NominalClock){
    //MicrosecondsPerRevolution
    CrankRevMicroSeconds = ToothSum * toothcirclecount;
   }
+  //I love statistics so much, i will give it to my statistics friend.
+  CrankSmoothClock();
  }
+
+
+void CrankSmoothClock(){
+  
+  CrankNominalRevSpeedsArrayMultiplier[CrankRevolutionNominalCount] = CrankRevMicroSeconds;
+  
+    if (CrankRevolutionNominalCount == 1){
+      CrankNominalSmooth = 0;
+      
+    for (int i = 1; i < (CrankSmoothRevMaxCount+1); i++) {
+      CrankNominalSmooth = CrankNominalSmooth + CrankNominalRevSpeedsArrayMultiplier[i];
+    }
+    
+      CrankNominalSmooth = CrankNominalSmooth/CrankRevMult;
+    }
+}
+
+
+
 
 void CrankRevolutionClock(){
   CrankRevClock = CurrentMicros - CrankRevClockGlobal;
@@ -228,6 +262,8 @@ void CrankRevolutionClock(){
      }
   CrankRevolutionClockReset = false;
 }
+
+
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤LIGHTSPEED NERD ENDS HERE¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
@@ -298,7 +334,7 @@ float FireHigherDeviation = 0;
 
 //Switch off the light, and close your eyes, feel the energy inside... chili bo.. chili bo.. chili bo..
 //FIREEE!!
-float FireTrigger = 0;
+int FireTrigger = 0;
 
 void Fire(){
     if(CrankDegree >=FireLowerDeviation && CrankDegree <= FireHigherDeviation){
@@ -341,13 +377,11 @@ void loop() {
   //------THIS IS DONE BEFORE THE CLOCKS TO MAKE SURE A FIRESOLUTION IS READY AS SOON AS POSSIBLE-----//
   
   CrankRevolutionClock();
-  CrankRPMperRev(CrankRevMicroSeconds);
+  CrankRPMperRev(CrankNominalSmooth);
   CrankDegreeClock();
   SparkTableLookup();
   FireOffsets();
   Fire();
-
-
 
  
   //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤PiewPiewPiew¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -395,22 +429,23 @@ void loop() {
 
 
 //########################################################################
-int debuglevel = 12;
+int debuglevel = 10;
 //########################################################################
 /* 0 = Off.
  * 1 = Outputs programruntime.
- * 2 = Hallsensor Value
- * 3 = Trigger Value
- * 4 = Tooth Count
- * 5 = BlippTimeGap for every tooth
- * 6 = Missing Tooth trig
- * 7 = BuskeeperLength
- * 8 = Buskeeper vs Blipp vs Nominalclock vs Smooth revolution
- * 9 = Crank Revolution in microseconds
- * 10 = RPM
- * 11 = Crank Degree
- * 12 = RPM Rounded VS RPM
- * 13 = Spark deviation
+ * 2 = Hallsensor Value. A+
+ * 3 = Trigger Value. A+
+ * 4 = Tooth Count. A+
+ * 5 = BlippTimeGap for every tooth. A+
+ * 6 = Missing Tooth trig. A+
+ * 7 = BuskeeperLength.
+ * 8 = Buskeeper vs Blipp vs Nominalclock vs Smooth revolution vs CranktNominal
+ * 9 = Crank Revolution in microseconds. A+
+ * 10 = RPM. A+
+ * 11 = Crank Degree. ++++++++++++++++++++++++++++++++FIXA
+ * 12 = RPM Rounded VS RPM. Debug Failure...?
+ * 13 = Spark deviation.
+ * 14 = Spark vs crankangle
  * 
  * Serial port Plotter v1.3.0 has been used.
  */
@@ -482,7 +517,11 @@ void DebugWorld(){
     Serial.print(";");
   }
   if (debuglevel == 9){
-    DebugValue(CrankRevMicroSeconds/8);
+    Serial.print("$");
+    Serial.print(CrankRevMicroSeconds/8);
+    Serial.print(" ");
+    Serial.print(CrankNominalSmooth/8);
+    Serial.print(";");
   }
   if (debuglevel == 10){
     DebugValue(RPM);
@@ -492,9 +531,9 @@ void DebugWorld(){
   }
   if (debuglevel == 12){
     Serial.print("$");
-    Serial.print(RPMrounded);
-    Serial.print(" ");
     Serial.print(RPM);
+    Serial.print(" ");
+    Serial.print(RPMrounded);
     Serial.print(";");
   }
    if (debuglevel == 13){
@@ -507,7 +546,15 @@ void DebugWorld(){
     Serial.print(";");
   }
   if (debuglevel == 14){
-    DebugValue(FireTrigger);
+    Serial.print("$");
+    Serial.print(CrankDegree);
+    Serial.print(" ");
+    Serial.print(FireTrigger*360);
+    Serial.print(" ");
+    Serial.print(FireLowerDeviation);
+    Serial.print(" ");
+    Serial.print(FireHigherDeviation);
+    Serial.print(";");
   }
 
 
