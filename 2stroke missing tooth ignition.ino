@@ -22,7 +22,7 @@ float FireNormalDegree = 0;       //Normally where spark should fire at TDC.
 
 
 //FireOffsets
-float FireAimDeviation = 3.00;        //+-Degrees of play for the system to find the fire solution when the crank is rotating.
+float FireAimDeviation = 2.00;        //+-Degrees of play for the system to find the fire solution when the crank is rotating.
 float FireOffset = 0;               //If spark still is offset from desired point, you can add offset here for adjustment.
 
 
@@ -56,7 +56,7 @@ int SparkTable[SparkTableAmountOfValues][2] = {
 
 
 //NUMBERS TO PLAY WITH IF HAVING TROUBLE.
-float triggerdelta = 1.2;                       //Previous tooth timings * this ratio for expecting the missing tooth.
+float triggerdelta = 1.4;                       //Previous tooth timings * this ratio for expecting the missing tooth.
 int hallsensorgate = 300;                       //Gate value for recognize hall blipps
 float CrankNominalRevSpeedsArray[250];          //If you somehow have more than 250 tooths.. O_o
 
@@ -129,9 +129,11 @@ float ToothSum = 0;
 float CrankRevMicroSeconds = 0;
 
 //CrankRevClock
-unsigned long CrankRevClock = 0;
+int CrankRevClock = 0;
 unsigned long CrankRevClockPrev = 0;
 unsigned long CrankRevClockGlobal;
+int CrankRevClockPulse = 0;
+bool CrankRevClockReset = false;
 
 //CrankSmoothClock
 const int CrankRevMult = 5;
@@ -140,6 +142,10 @@ int CrankSmoothRevMaxCount = CrankRevolutionRPMSmoothing+1;
 float CrankNominalRevSpeedsArrayMultiplier[CrankRevMult];
 float CrankNominalSmooth = 0;
 float CrankNominalMicroSeconds = 0;
+
+//Fire
+unsigned long FireCurrentGlobalTime = 0;
+int FireMicroLength = 1000;
 
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -186,8 +192,7 @@ void toothcounter(int toothinput){
     toothcount = 1;
   }
   if (toothcount == 1){
-    //Steady pulse for the Crank Clock
-    CrankRevolutionClockReset = true;
+    CrankRevClockReset = true;
     SparkTableLookupReset = true;
     CrankRevolutionNominalCount++;
     }
@@ -253,17 +258,6 @@ void CrankSmoothClock(){
 
 
 
-
-void CrankRevolutionClock(){
-  CrankRevClock = CurrentMicros - CrankRevClockGlobal;
-    if (CrankRevolutionClockReset == true){
-      CrankRevClock = 0;
-      CrankRevClockGlobal = CurrentMicros;
-     }
-  CrankRevolutionClockReset = false;
-}
-
-
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤LIGHTSPEED NERD ENDS HERE¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
@@ -283,13 +277,6 @@ float RPM = 0;
     //Revolution per Minute
     RPM = CrankRevPerMillisecond * 60;
     }
-
-//Crank Degree Location Clock.
-float CrankDegree = 0;
-  void CrankDegreeClock(){
-    CrankDegree = (CrankRevClock / CrankRevMicroSeconds)*360;
-  }
-
 
 
 //Uses Sparktable and rounds RPM to calculate a fire solution
@@ -337,16 +324,21 @@ float FireHigherDeviation = 0;
 int FireTrigger = 0;
 
 void Fire(){
-    if(CrankDegree >=FireLowerDeviation && CrankDegree <= FireHigherDeviation){
-      Strobelight(1);
-      Spark(1);
-      FireTrigger = 1;
-      }
-    else{
-      Strobelight(0);
-      Spark(0);
-      FireTrigger = 0;
-      }
+
+  //TOODOOOOOO---CONVERT RPM AND ANGLE TO MICROSECONDS!!!!!!!!!!!!!!!!!!
+
+  if(toothcount == 4){
+    Strobelight(1);
+    Spark(1);
+    FireTrigger = 1;
+    FireCurrentGlobalTime = micros();
+  }
+  else{
+    Strobelight(0);
+    Spark(0);
+    FireTrigger = 0;
+  }
+      
 }
 
 //Blinky!
@@ -365,26 +357,21 @@ void Spark(int sparkstate){
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
 void loop() {
+
+
+
   //-----Master Clock-----//
   CurrentMicros = micros();
-  unsigned long ProgramTimeStart = CurrentMicros;     //Used for debugging
+  //-----Sensors--------//
   HallSensorValue = analogRead(PinHall);
-
-
-
-
-
-  //------THIS IS DONE BEFORE THE CLOCKS TO MAKE SURE A FIRESOLUTION IS READY AS SOON AS POSSIBLE-----//
-  
-  CrankRevolutionClock();
+  //-----Calculations--------//
   CrankRPMperRev(CrankNominalSmooth);
-  CrankDegreeClock();
   SparkTableLookup();
   FireOffsets();
   Fire();
+  
 
- 
-  //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤PiewPiewPiew¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
+  
  //-----Check for the missing tooth-----//
   MissingToothTest();
   
@@ -411,12 +398,10 @@ void loop() {
   }
   triggerlast = trigger;
   //---END BLIPP BLOPP COUNTER-----//
-  //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤PiewPiewPiew¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
 
 
   DebugWorld();
-
 
 
 
@@ -429,7 +414,7 @@ void loop() {
 
 
 //########################################################################
-int debuglevel = 10;
+int debuglevel = 15;
 //########################################################################
 /* 0 = Off.
  * 1 = Outputs programruntime.
@@ -446,6 +431,8 @@ int debuglevel = 10;
  * 12 = RPM Rounded VS RPM. Debug Failure...?
  * 13 = Spark deviation.
  * 14 = Spark vs crankangle
+ * 15 = Spark Length
+ * 16 = 
  * 
  * Serial port Plotter v1.3.0 has been used.
  */
@@ -526,9 +513,6 @@ void DebugWorld(){
   if (debuglevel == 10){
     DebugValue(RPM);
   }
-  if (debuglevel == 11){
-    DebugValue(CrankDegree);
-  }
   if (debuglevel == 12){
     Serial.print("$");
     Serial.print(RPM);
@@ -547,8 +531,6 @@ void DebugWorld(){
   }
   if (debuglevel == 14){
     Serial.print("$");
-    Serial.print(CrankDegree);
-    Serial.print(" ");
     Serial.print(FireTrigger*360);
     Serial.print(" ");
     Serial.print(FireLowerDeviation);
@@ -556,10 +538,9 @@ void DebugWorld(){
     Serial.print(FireHigherDeviation);
     Serial.print(";");
   }
-
-
-
-
+  if (debuglevel == 15){
+    DebugValue(FireTrigger);
+  }
 
 
 
