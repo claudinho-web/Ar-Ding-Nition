@@ -145,7 +145,8 @@ float CrankNominalMicroSeconds = 0;
 
 //Fire
 unsigned long FireCurrentGlobalTime = 0;
-int FireMicroLength =  1000;
+int FireMicroLengthMilliseconds = 1;
+int FireMicroLength =  FireMicroLengthMilliseconds*1000;
 bool FireReset = false;
 
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -328,6 +329,7 @@ void Fire(){
 
   float FireMicroDelay;
   unsigned long FireExpectedGlobalTime;
+  unsigned long FireExpectedGlobalTimeEnd;
   
   //Calculate how many microseconds it takes to go to desired angle.
   FireMicroDelay = RPM/60;                //RPM to revolution per seconds
@@ -340,22 +342,33 @@ void Fire(){
   //Save inital clock state and add measured angle/microseconds.
   if (CrankRevClockReset == true){
     FireExpectedGlobalTime = CurrentMicros + FireMicroDelay;
+    FireExpectedGlobalTimeEnd = FireExpectedGlobalTime + FireMicroLength;
     CrankRevClockReset = false;
   }
 
   //If main clock is equal or above calculated time, fire.
-  if (FireExpectedGlobalTime <= CurrentMicros){
+
+  
+  
+  if (CurrentMicros >= FireExpectedGlobalTime && CurrentMicros <= FireExpectedGlobalTimeEnd){
     FireTrigger = 1;
     Strobelight(1);
     Spark(1);
   }
+  else {
+    FireTrigger = 0;
+    Strobelight(0);
+    Spark(0);
+  }
+
+  /*
   //Length of fire
-  if (CurrentMicros >= (FireExpectedGlobalTime+FireMicroLength)){
+  if (CurrentMicros >= (FireExpectedGlobalTimeEnd)){
     FireTrigger = 0;
     Strobelight(0);
     Spark(0); 
   }
-  
+  */
   Serial.print("$");
   Serial.print(FireTrigger);
   Serial.print(";");
