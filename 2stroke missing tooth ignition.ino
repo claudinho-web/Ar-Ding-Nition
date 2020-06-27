@@ -56,7 +56,7 @@ int SparkTable[SparkTableAmountOfValues][2] = {
 
 
 //NUMBERS TO PLAY WITH IF HAVING TROUBLE.
-float triggerdelta = 1.4;                       //Previous tooth timings * this ratio for expecting the missing tooth.
+float triggerdelta = 1.2;                       //Previous tooth timings * this ratio for expecting the missing tooth.
 int hallsensorgate = 300;                       //Gate value for recognize hall blipps
 float CrankNominalRevSpeedsArray[250];          //If you somehow have more than 250 tooths.. O_o
 
@@ -145,7 +145,8 @@ float CrankNominalMicroSeconds = 0;
 
 //Fire
 unsigned long FireCurrentGlobalTime = 0;
-int FireMicroLength = 1000;
+int FireMicroLength =  1000;
+bool FireReset = false;
 
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -325,19 +326,40 @@ int FireTrigger = 0;
 
 void Fire(){
 
-  //TOODOOOOOO---CONVERT RPM AND ANGLE TO MICROSECONDS!!!!!!!!!!!!!!!!!!
+  float FireMicroDelay;
+  unsigned long FireExpectedGlobalTime;
+  
+  //Calculate how many microseconds it takes to go to desired angle.
+  FireMicroDelay = RPM/60;                //RPM to revolution per seconds
+  FireMicroDelay = 1 / FireMicroDelay;    //Seconds per Revolution
+  FireMicroDelay = FireMicroDelay/360;     //Second per Degree
+  FireMicroDelay = FireMicroDelay * 1000;  //Milliseconds Per Degree
+  FireMicroDelay = FireMicroDelay * 1000;  //MicroSeconds Per Degree
+  FireMicroDelay = FireMicroDelay * FireSolution; //FireSolution Degree to Microseconds.
+  
+  //Save inital clock state and add measured angle/microseconds.
+  if (CrankRevClockReset == true){
+    FireExpectedGlobalTime = CurrentMicros + FireMicroDelay;
+    CrankRevClockReset = false;
+  }
 
-  if(toothcount == 4){
+  //If main clock is equal or above calculated time, fire.
+  if (FireExpectedGlobalTime <= CurrentMicros){
+    FireTrigger = 1;
     Strobelight(1);
     Spark(1);
-    FireTrigger = 1;
-    FireCurrentGlobalTime = micros();
   }
-  else{
-    Strobelight(0);
-    Spark(0);
+  //Length of fire
+  if (CurrentMicros >= (FireExpectedGlobalTime+FireMicroLength)){
     FireTrigger = 0;
+    Strobelight(0);
+    Spark(0); 
   }
+  
+  Serial.print("$");
+  Serial.print(FireTrigger);
+  Serial.print(";");
+
       
 }
 
@@ -414,7 +436,7 @@ void loop() {
 
 
 //########################################################################
-int debuglevel = 15;
+int debuglevel = 0;
 //########################################################################
 /* 0 = Off.
  * 1 = Outputs programruntime.
@@ -547,4 +569,3 @@ void DebugWorld(){
 
   
 }
-
