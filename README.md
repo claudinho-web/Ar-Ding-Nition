@@ -1,5 +1,5 @@
 # Ar-Ding-Nition
-# 2-Stroke Arduino ignition
+# 2 stroke Arduino ignition - Missing tooth trigger wheel ignition.
 This project is halted.
 
 
