@@ -4,10 +4,10 @@ This project is halted.
 
 
 Before reading:
-*This is my first project written on the Arduino.
-*I have no prior experience of C++ or ignition systems.
-*Unfinished, still tons of things left to do in the code.
-*Stopped the project at problems with the board freezing at random. But engine running ok at lower RPM.
+- This is my first project written on the Arduino.
+- I have no prior experience of C++ or ignition systems.
+- Unfinished, still tons of things left to do in the code.
+- Stopped the project at problems with the board freezing at random. But engine running ok at lower RPM.
 
 Purpose of the project:
 *Low cost.
