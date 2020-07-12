@@ -1,6 +1,6 @@
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤Most overkill ignition for 2stroke ever¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
+//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤Ar-Ding-Nition¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -64,12 +64,6 @@ float CrankNominalRevSpeedsArray[250];          //If you somehow have more than 
 
 
 
-
-
-
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤WE ARE FORMED BY TIMESPACE IN MULTIPLE DIMENSIONS¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
 //---------------------------------UTILLITIES-------------------------------------------------
 
@@ -368,21 +362,6 @@ void Fire(){
     Spark(0);
     //digitalWrite(LED_BUILTIN, LOW);
   }
-
-  /*
-  //Length of fire
-  if (CurrentMicros >= (FireExpectedGlobalTimeEnd)){
-    FireTrigger = 0;
-    Strobelight(0);
-    Spark(0); 
-  }
-  
-  
-  
-  Serial.print("$");
-  Serial.print(FireTrigger);
-  Serial.print(";");
-  */
       
 }
 
@@ -411,8 +390,8 @@ void loop() {
   HallSensorValue = analogRead(PinHall);
   //-----Calculations--------//
   CrankRPMperRev(CrankNominalSmooth);
-  //CrankRevMicroSeconds
-  //CrankNominalSmooth
+  CrankRevMicroSeconds
+  CrankNominalSmooth
   SparkTableLookup();
   FireOffsets();
   Fire();
@@ -455,7 +434,7 @@ void loop() {
 
 
 
-  //DebugWorld();
+  DebugWorld();
 
 
 
