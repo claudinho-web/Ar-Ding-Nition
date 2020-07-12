@@ -8,10 +8,12 @@
 //Setup
 int PinHall = A0;                 //Analog Hall.
 int Strobelight1 = 9;             //simple LED strobelight for visualizing spark.
+int PinStateGenerator = 1;
 
 void setup() {
-  Serial.begin(921600);
+  //Serial.begin(921600);
   pinMode(Strobelight1, OUTPUT);
+  //pinMode(LED_BUILTIN, OUTPUT);
 
 }
 
@@ -32,31 +34,31 @@ int SparkTablePrecision = 500;     //Change this value to use 50s 100s 500s or 1
 const int SparkTableAmountOfValues = 20; //CHANGE THIS FOR CORRESPONDING OF TOTAL VALUES IN THE TABLE
 
 int SparkTable[SparkTableAmountOfValues][2] = {  
-   {0, 0} ,
-   {500, 5} ,
-   {1000, 10} ,
-   {1500, 15} ,
-   {2000, 25} ,
-   {2500, 30} ,
-   {3000, 35} ,
-   {3500, 40} ,
-   {4000, 45} ,
-   {4500, 50} ,
-   {5000, 55} ,
-   {5500, 60} ,
-   {6000, 65} ,
-   {6500, 70} ,
-   {7000, 75} ,
-   {7500, 80} ,
-   {8000, 85} ,
-   {8500, 90} ,
-   {9000, 95} ,
-   {9500, 100}
+   {0, 20} ,
+   {500, 20} ,
+   {1000, 20} ,
+   {1500, 20} , //kick ends
+   {2000, 40} ,
+   {2500, 40} , 
+   {3000, 40} ,
+   {3500, 40} , 
+   {4000, 40} , 
+   {4500, 40} , //tomgang ends
+   {5000, 40} ,
+   {5500, 35} ,
+   {6000, 30} ,
+   {6500, 30} ,
+   {7000, 25} ,
+   {7500, 25} ,
+   {8000, 20} ,
+   {8500, 20} ,
+   {9000, 20} ,
+   {9500, 20}
 };
 
 
 //NUMBERS TO PLAY WITH IF HAVING TROUBLE.
-float triggerdelta = 1.2;                       //Previous tooth timings * this ratio for expecting the missing tooth.
+float triggerdelta = 1.3;                       //Previous tooth timings * this ratio for expecting the missing tooth.
 int hallsensorgate = 300;                       //Gate value for recognize hall blipps
 float CrankNominalRevSpeedsArray[250];          //If you somehow have more than 250 tooths.. O_o
 
@@ -136,7 +138,7 @@ int CrankRevClockPulse = 0;
 bool CrankRevClockReset = false;
 
 //CrankSmoothClock
-const int CrankRevMult = 5;
+const int CrankRevMult = 2;
 int CrankRevolutionRPMSmoothing = CrankRevMult;
 int CrankSmoothRevMaxCount = CrankRevolutionRPMSmoothing+1;
 float CrankNominalRevSpeedsArrayMultiplier[CrankRevMult];
@@ -145,8 +147,8 @@ float CrankNominalMicroSeconds = 0;
 
 //Fire
 unsigned long FireCurrentGlobalTime = 0;
-int FireMicroLengthMilliseconds = 1;
-int FireMicroLength =  FireMicroLengthMilliseconds*1000;
+//int FireMicroLengthMilliseconds = 1;
+int FireMicroLength = 5000;
 bool FireReset = false;
 
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -165,6 +167,8 @@ void blipp(unsigned long blippcurrenttime){
     toothcounter(1);
     missingtoothcheck = true;
     missingtoothdebug = 0;
+
+    
     
 }
 
@@ -328,8 +332,8 @@ int FireTrigger = 0;
 void Fire(){
 
   float FireMicroDelay;
-  unsigned long FireExpectedGlobalTime;
-  unsigned long FireExpectedGlobalTimeEnd;
+  unsigned long FireExpectedGlobalTimeFire;
+  unsigned long FireExpectedGlobalTimeCharge;
   
   //Calculate how many microseconds it takes to go to desired angle.
   FireMicroDelay = RPM/60;                //RPM to revolution per seconds
@@ -341,8 +345,10 @@ void Fire(){
   
   //Save inital clock state and add measured angle/microseconds.
   if (CrankRevClockReset == true){
-    FireExpectedGlobalTime = CurrentMicros + FireMicroDelay;
-    FireExpectedGlobalTimeEnd = FireExpectedGlobalTime + FireMicroLength;
+    //when spark should go off
+    FireExpectedGlobalTimeFire = CurrentMicros + FireMicroDelay;
+    //When spark should charge.
+    FireExpectedGlobalTimeCharge = FireExpectedGlobalTimeFire - FireMicroLength;
     CrankRevClockReset = false;
   }
 
@@ -350,15 +356,17 @@ void Fire(){
 
   
   
-  if (CurrentMicros >= FireExpectedGlobalTime && CurrentMicros <= FireExpectedGlobalTimeEnd){
+  if (CurrentMicros >= FireExpectedGlobalTimeCharge && CurrentMicros <= FireExpectedGlobalTimeFire){
     FireTrigger = 1;
     Strobelight(1);
     Spark(1);
+    //digitalWrite(LED_BUILTIN, HIGH);
   }
   else {
     FireTrigger = 0;
     Strobelight(0);
     Spark(0);
+    //digitalWrite(LED_BUILTIN, LOW);
   }
 
   /*
@@ -368,11 +376,13 @@ void Fire(){
     Strobelight(0);
     Spark(0); 
   }
-  */
+  
+  
+  
   Serial.print("$");
   Serial.print(FireTrigger);
   Serial.print(";");
-
+  */
       
 }
 
@@ -401,24 +411,33 @@ void loop() {
   HallSensorValue = analogRead(PinHall);
   //-----Calculations--------//
   CrankRPMperRev(CrankNominalSmooth);
+  //CrankRevMicroSeconds
+  //CrankNominalSmooth
   SparkTableLookup();
   FireOffsets();
   Fire();
+
   
 
   
  //-----Check for the missing tooth-----//
   MissingToothTest();
+
+
   
   //-------HallGate-----//
   //Hall sensor is HIGH
     if (HallSensorValue < hallsensorgate){
      trigger = 1;
+     
     }
     //Hall sensor is LOW
     else{
       trigger = 0;
+      
     }
+
+    
   //-------BLIPP BLOPP COUNTER-----//
   //---BLIPP---///
   if (trigger != triggerlast) {
@@ -436,7 +455,7 @@ void loop() {
 
 
 
-  DebugWorld();
+  //DebugWorld();
 
 
 
