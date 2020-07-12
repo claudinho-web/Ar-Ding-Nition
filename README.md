@@ -2,6 +2,8 @@
 # 2 stroke Arduino ignition - Missing tooth trigger wheel ignition.
 This project is halted.
 
+[First test run](https://www.youtube.com/watch?v=1kGALCyVvWc&feature=youtu.be)
+
 
 Before reading:
 - This is my first project written on the Arduino.
