@@ -23,9 +23,10 @@ float HallDegree = 90;            //Hall mount angle
 float FireNormalDegree = 0;       //Normally where spark should fire at TDC.
 
 
-//FireOffsets
+//Fire Settings.
 float FireAimDeviation = 2.00;        //+-Degrees of play for the system to find the fire solution when the crank is rotating.
 float FireOffset = 0;               //If spark still is offset from desired point, you can add offset here for adjustment.
+int FireMicroLength = 5000;         //Spark charge length.
 
 
 //SPARKTABLE
@@ -61,7 +62,7 @@ int SparkTable[SparkTableAmountOfValues][2] = {
 float triggerdelta = 1.3;                       //Previous tooth timings * this ratio for expecting the missing tooth.
 int hallsensorgate = 300;                       //Gate value for recognize hall blipps
 float CrankNominalRevSpeedsArray[250];          //If you somehow have more than 250 tooths.. O_o
-
+const int CrankRevMult = 2;                     //1-5, smoothing of rpm based of revolution.
 
 
 
@@ -132,7 +133,6 @@ int CrankRevClockPulse = 0;
 bool CrankRevClockReset = false;
 
 //CrankSmoothClock
-const int CrankRevMult = 2;
 int CrankRevolutionRPMSmoothing = CrankRevMult;
 int CrankSmoothRevMaxCount = CrankRevolutionRPMSmoothing+1;
 float CrankNominalRevSpeedsArrayMultiplier[CrankRevMult];
@@ -141,8 +141,6 @@ float CrankNominalMicroSeconds = 0;
 
 //Fire
 unsigned long FireCurrentGlobalTime = 0;
-//int FireMicroLengthMilliseconds = 1;
-int FireMicroLength = 5000;
 bool FireReset = false;
 
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
@@ -150,7 +148,6 @@ bool FireReset = false;
 
 void blipp(unsigned long blippcurrenttime){
   //----Its all about the god damn clock----//
-            //----+++++++++++----//
     BlippPrevTriggerGap = BlippTimeGap;
     BlippTimeGap = blippcurrenttime - BlippGlobalTime;
     MissingBlippDeltaTime = (BlippPrevTriggerGap*triggerdelta);
@@ -257,12 +254,7 @@ void CrankSmoothClock(){
 }
 
 
-
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤LIGHTSPEED NERD ENDS HERE¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
-
-
-
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤GEARHEADS STARTS HERE¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
 //RPM calculation based on one revolution.
@@ -375,14 +367,12 @@ void Spark(int sparkstate){
 }
 
 
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
-//¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
+
+
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 //¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
 
 void loop() {
-
-
 
   //-----Master Clock-----//
   CurrentMicros = micros();
@@ -395,14 +385,9 @@ void loop() {
   SparkTableLookup();
   FireOffsets();
   Fire();
-
-  
-
   
  //-----Check for the missing tooth-----//
   MissingToothTest();
-
-
   
   //-------HallGate-----//
   //Hall sensor is HIGH
@@ -433,12 +418,14 @@ void loop() {
   //---END BLIPP BLOPP COUNTER-----//
 
 
-
   DebugWorld();
 
-
-
 }
+
+
+
+
+
 
 
 
