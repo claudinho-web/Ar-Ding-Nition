@@ -63,10 +63,10 @@ int SparkTable[SparkTableAmountOfValues][2] = {
 
 
 //NUMBERS TO PLAY WITH IF HAVING TROUBLE.
-float triggerdelta = 1.3;                       //Previous tooth timings * this ratio for expecting the missing tooth.
+float triggerdelta = 1.3;                       //1.1 - 1.9. Previous tooth timings * this ratio for expecting the missing tooth.
 int hallsensorgate = 300;                       //Gate value for recognize hall blipps
 float CrankNominalRevSpeedsArray[250];          //If you somehow have more than 250 tooths.. O_o
-const int CrankRevMult = 2;                     //1-5, smoothing of rpm based of revolution.
+const int CrankRevMult = 2;                     //1 - 5. smoothing of rpm based of revolution.
 
 
 
